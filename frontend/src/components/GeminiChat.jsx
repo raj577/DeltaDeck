@@ -39,15 +39,32 @@ const AiResponse = ({ text }) => {
     )
 }
 
-export default function GeminiChat() {
+export default function GeminiChat({ resetWelcome = false }) {
     // State management for the chat
     const [question, setQuestion] = useState('')
     const [answer, setAnswer] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    const [showWelcome, setShowWelcome] = useState(true)
     
     // Ref for auto-scrolling to answer
     const answerRef = useRef(null)
+
+    // Reset welcome message when resetWelcome prop changes
+    useEffect(() => {
+        if (resetWelcome) {
+            console.log('🔄 Resetting welcome message for mobile modal')
+            setShowWelcome(true)
+            setQuestion('')
+            setAnswer('')
+            setError('')
+        }
+    }, [resetWelcome])
+
+    // Debug logging for welcome state
+    useEffect(() => {
+        console.log('🤖 GeminiChat state:', { showWelcome, answer, error, isLoading, resetWelcome })
+    }, [showWelcome, answer, error, isLoading, resetWelcome])
 
     // Auto-scroll to answer when it appears
     useEffect(() => {
@@ -62,6 +79,19 @@ export default function GeminiChat() {
             }, 100)
         }
     }, [answer])
+
+    // Hide welcome message when user starts interacting
+    const handleQuestionChange = (e) => {
+        setQuestion(e.target.value)
+        if (showWelcome && e.target.value.trim()) {
+            setShowWelcome(false)
+        }
+    }
+
+    const handleQuickQuestion = (quickQuestion) => {
+        setQuestion(quickQuestion)
+        setShowWelcome(false)
+    }
 
     /**
      * Handles the submission of a question to the Gemini API.
@@ -151,7 +181,7 @@ User's question: "${question}"`
                         id="question-input"
                         type="text"
                         value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
+                        onChange={handleQuestionChange}
                         onKeyPress={handleKeyPress}
                         placeholder="e.g., What is a bull call spread?"
                         className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all shadow-sm text-gray-900 placeholder-gray-500"
@@ -190,7 +220,7 @@ User's question: "${question}"`
                     ].map((quickQuestion, index) => (
                         <button
                             key={index}
-                            onClick={() => setQuestion(quickQuestion)}
+                            onClick={() => handleQuickQuestion(quickQuestion)}
                             className="px-3 py-2 bg-white hover:bg-gray-50 border border-gray-200 hover:border-purple-300 rounded-lg text-xs font-medium text-gray-700 hover:text-purple-700 transition-all duration-200 shadow-sm hover:shadow-md"
                         >
                             {quickQuestion}
@@ -212,7 +242,49 @@ User's question: "${question}"`
 
                 {answer && <div ref={answerRef}><AiResponse text={answer} /></div>}
 
-                {!answer && !error && !isLoading && (
+                {!answer && !error && !isLoading && showWelcome && (
+                    <div className="p-6 bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl shadow-inner animate-pulse">
+                        <div className="flex items-start space-x-3">
+                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                <span className="text-white text-sm font-bold">AI</span>
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-gray-800 text-sm leading-relaxed font-medium">
+                                    <div className="mb-4 text-center">
+                                        <div className="text-2xl mb-2">🤖</div>
+                                        <div className="text-lg font-bold text-purple-700 mb-2">
+                                            Ask DeltaDeck AI!
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            I'm your option spreads expert. Ask me anything about:
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2 mb-4">
+                                        <div className="text-xs bg-white/70 rounded-lg p-2 text-center">
+                                            📈 Bull Call Spreads
+                                        </div>
+                                        <div className="text-xs bg-white/70 rounded-lg p-2 text-center">
+                                            📉 Bear Put Spreads
+                                        </div>
+                                        <div className="text-xs bg-white/70 rounded-lg p-2 text-center">
+                                            🦋 Iron Butterflies
+                                        </div>
+                                        <div className="text-xs bg-white/70 rounded-lg p-2 text-center">
+                                            🔄 Iron Condors
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-purple-700 font-bold text-sm animate-bounce">
+                                            👆 Type your question above or click quick questions!
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {!answer && !error && !isLoading && !showWelcome && (
                     <div className="text-center py-12 text-gray-500">
                         <div className="text-4xl mb-4">💭</div>
                         <p className="text-sm font-medium">Ask me anything about option spreads!</p>

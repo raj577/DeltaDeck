@@ -408,10 +408,7 @@ function App() {
         </div>
       </main>
 
-      {/* Debug indicator - remove this later */}
-      <div className="fixed top-20 left-4 z-50 bg-black/80 text-white px-3 py-2 rounded-lg text-xs">
-        Screen: {typeof window !== 'undefined' ? window.innerWidth : 'unknown'}px | Mobile: {isMobile ? 'YES' : 'NO'}
-      </div>
+
 
       {/* Mobile Floating Chat Button - Always show for testing */}
       {(isMobile || window.innerWidth < 1024) && (
@@ -465,7 +462,7 @@ function App() {
 
                 {/* Modal Content - Scrollable */}
                 <div className="flex-1 overflow-y-auto p-6 min-h-0">
-                  <GeminiChat />
+                  <GeminiChat key={showChatModal ? 'mobile-chat' : 'hidden'} resetWelcome={showChatModal} />
                 </div>
               </div>
             </div>
