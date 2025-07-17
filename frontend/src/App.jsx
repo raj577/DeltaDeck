@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { apiService } from './services/apiService'
+import SpreadCards from './components/SpreadCards'
+import GeminiChat from './components/GeminiChat'
 
 function App() {
   const [currentPrices, setCurrentPrices] = useState(null)
@@ -49,6 +51,10 @@ function App() {
 
       setCurrentPrices(data.prices)
       setLastUpdated(new Date())
+
+      // Fetch recommendations for the selected symbol
+      await fetchRecommendations(selectedSymbol)
+
       setLoading(false)
       console.log('Initial data fetched successfully')
 
@@ -65,6 +71,25 @@ function App() {
       })
       setLastUpdated(new Date())
       setLoading(false)
+    }
+  }
+
+  const fetchRecommendations = async (symbol) => {
+    try {
+      console.log(`Fetching recommendations for ${symbol}...`)
+      const response = await fetch(`http://127.0.0.1:8000/api/recommendations/${symbol}`)
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const recommendationsData = await response.json()
+      console.log('Recommendations fetched:', recommendationsData)
+      setRecommendations(recommendationsData)
+
+    } catch (err) {
+      console.error('Error fetching recommendations:', err)
+      setRecommendations([])
     }
   }
 
@@ -85,7 +110,7 @@ function App() {
         try {
           const message = JSON.parse(event.data)
           console.log('📡 Received WebSocket message:', message)
-          
+
           if (message.type === 'price_update' && message.data) {
             setCurrentPrices(message.data)
             setLastUpdated(new Date())
@@ -99,7 +124,7 @@ function App() {
       ws.onclose = (event) => {
         console.log('🔌 WebSocket disconnected:', event.code, event.reason)
         setWsConnected(false)
-        
+
         // Attempt to reconnect after 3 seconds
         if (!event.wasClean) {
           setWsError('Connection lost. Attempting to reconnect...')
@@ -124,9 +149,13 @@ function App() {
 
 
 
-  const handleSymbolChange = (symbol) => {
+  const handleSymbolChange = async (symbol) => {
     setSelectedSymbol(symbol)
     setLoading(true)
+
+    // Fetch recommendations for the new symbol
+    await fetchRecommendations(symbol)
+    setLoading(false)
   }
 
   const handleRefresh = () => {
@@ -154,32 +183,32 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 bg-blue-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold">📊</span>
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-4">
+              <div className="h-12 w-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-xl">📊</span>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
-                  Option Spreads Analyzer
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  DeltaDeck
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-600 font-medium">
                   Real-time NIFTY & BANKNIFTY spread recommendations
                 </p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-700">Symbol:</label>
+              <div className="flex items-center space-x-3 bg-white/60 rounded-lg px-3 py-2 backdrop-blur-sm">
+                <label className="text-sm font-semibold text-gray-700">Symbol:</label>
                 <select
                   value={selectedSymbol}
                   onChange={(e) => handleSymbolChange(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-3 py-2 border-0 bg-white/80 rounded-lg text-sm font-semibold text-gray-900 focus:ring-2 focus:ring-blue-500 shadow-sm"
                 >
                   <option value="NIFTY">NIFTY</option>
                   <option value="BANKNIFTY">BANKNIFTY</option>
@@ -188,23 +217,23 @@ function App() {
 
               <button
                 onClick={handleRefresh}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
-                <span>🔄</span>
+                <span className="text-lg">🔄</span>
                 <span>Refresh</span>
               </button>
 
               {/* WebSocket Status */}
-              <div className="flex items-center space-x-2">
-                <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <span className="text-xs text-gray-500">
+              <div className="flex items-center space-x-2 bg-white/60 rounded-lg px-3 py-2 backdrop-blur-sm">
+                <div className={`w-3 h-3 rounded-full ${wsConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'} shadow-sm`}></div>
+                <span className={`text-xs font-semibold ${wsConnected ? 'text-green-700' : 'text-red-700'}`}>
                   {wsConnected ? 'Live' : 'Offline'}
                 </span>
               </div>
 
-              <div className="text-xs text-gray-500">
-                <div>Last updated:</div>
-                <div>{lastUpdated?.toLocaleTimeString()}</div>
+              <div className="text-xs text-gray-600 bg-white/60 rounded-lg px-3 py-2 backdrop-blur-sm">
+                <div className="font-medium">Last updated:</div>
+                <div className="font-semibold">{lastUpdated?.toLocaleTimeString()}</div>
               </div>
             </div>
           </div>
@@ -237,51 +266,65 @@ function App() {
         {/* Current Prices Section */}
         {currentPrices && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className={`p-6 rounded-lg border-2 transition-all ${selectedSymbol === 'NIFTY'
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 bg-white'
+            <div className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:scale-105 ${selectedSymbol === 'NIFTY'
+              ? 'border-blue-400 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg'
+              : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-blue-300'
               }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className={`text-lg font-semibold ${selectedSymbol === 'NIFTY' ? 'text-blue-900' : 'text-gray-900'
-                    }`}>
-                    NIFTY
-                  </h3>
-                  <p className="text-sm text-gray-500">NIFTY 50 Index</p>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h3 className={`text-xl font-bold ${selectedSymbol === 'NIFTY' ? 'text-blue-900' : 'text-gray-900'
+                      }`}>
+                      NIFTY
+                    </h3>
+                    {selectedSymbol === 'NIFTY' && (
+                      <span className="px-2 py-1 bg-blue-200 text-blue-800 text-xs font-semibold rounded-full">
+                        SELECTED
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 font-medium">NIFTY 50 Index</p>
                 </div>
                 <div className="text-right">
-                  <div className={`text-2xl font-bold ${selectedSymbol === 'NIFTY' ? 'text-blue-900' : 'text-gray-900'
+                  <div className={`text-3xl font-bold mb-1 ${selectedSymbol === 'NIFTY' ? 'text-blue-900' : 'text-gray-900'
                     }`}>
                     {formatPrice(currentPrices?.NIFTY?.ltp || 0)}
                   </div>
-                  <div className="flex items-center text-sm text-green-600">
-                    <span className="mr-1">📈</span>
-                    <span>Live</span>
+                  <div className="flex items-center justify-end space-x-1 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-green-700 font-semibold">Live</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className={`p-6 rounded-lg border-2 transition-all ${selectedSymbol === 'BANKNIFTY'
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 bg-white'
+            <div className={`group p-6 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:scale-105 ${selectedSymbol === 'BANKNIFTY'
+              ? 'border-purple-400 bg-gradient-to-br from-purple-50 to-purple-100 shadow-lg'
+              : 'border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:border-purple-300'
               }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className={`text-lg font-semibold ${selectedSymbol === 'BANKNIFTY' ? 'text-blue-900' : 'text-gray-900'
-                    }`}>
-                    BANKNIFTY
-                  </h3>
-                  <p className="text-sm text-gray-500">BANK NIFTY Index</p>
+                  <div className="flex items-center space-x-2 mb-1">
+                    <h3 className={`text-xl font-bold ${selectedSymbol === 'BANKNIFTY' ? 'text-purple-900' : 'text-gray-900'
+                      }`}>
+                      BANKNIFTY
+                    </h3>
+                    {selectedSymbol === 'BANKNIFTY' && (
+                      <span className="px-2 py-1 bg-purple-200 text-purple-800 text-xs font-semibold rounded-full">
+                        SELECTED
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600 font-medium">BANK NIFTY Index</p>
                 </div>
                 <div className="text-right">
-                  <div className={`text-2xl font-bold ${selectedSymbol === 'BANKNIFTY' ? 'text-blue-900' : 'text-gray-900'
+                  <div className={`text-3xl font-bold mb-1 ${selectedSymbol === 'BANKNIFTY' ? 'text-purple-900' : 'text-gray-900'
                     }`}>
                     {formatPrice(currentPrices?.BANKNIFTY?.ltp || 0)}
                   </div>
-                  <div className="flex items-center text-sm text-green-600">
-                    <span className="mr-1">📈</span>
-                    <span>Live</span>
+                  <div className="flex items-center justify-end space-x-1 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-green-700 font-semibold">Live</span>
                   </div>
                 </div>
               </div>
@@ -292,35 +335,18 @@ function App() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recommendations Section */}
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              {selectedSymbol} Spread Recommendations
-            </h2>
-            <div className="text-center py-8">
-              <span className="text-4xl mb-4 block">📊</span>
-              <p className="text-gray-500">
-                No spread recommendations found for {selectedSymbol}
-              </p>
-              <button
-                onClick={handleRefresh}
-                className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium"
-              >
-                Refresh Data
-              </button>
-            </div>
+          <div className="lg:col-span-1">
+            <SpreadCards
+              recommendations={recommendations}
+              symbol={selectedSymbol}
+              loading={loading}
+              onRefresh={handleRefresh}
+            />
           </div>
 
-          {/* Charts Section */}
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              {selectedSymbol} Price Chart
-            </h2>
-            <div className="text-center py-8">
-              <span className="text-4xl mb-4 block">📈</span>
-              <p className="text-gray-500">
-                No chart data available for {selectedSymbol}
-              </p>
-            </div>
+          {/* AI Chat Section */}
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+            <GeminiChat />
           </div>
         </div>
       </main>

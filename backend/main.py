@@ -9,6 +9,7 @@ import time
 import json
 import struct
 import websockets
+import httpx
 from datetime import datetime
 from typing import List, Optional, Dict, Set
 from dotenv import load_dotenv
@@ -232,6 +233,13 @@ class HealthResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     message: str
+    timestamp: str
+
+class GeminiRequest(BaseModel):
+    question: str
+
+class GeminiResponse(BaseModel):
+    answer: str
     timestamp: str
 
 # Startup and shutdown events
@@ -534,6 +542,72 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print(f"❌ WebSocket error: {e}")
         manager.disconnect(websocket)
+
+# Gemini AI chat endpoint
+@app.post("/api/gemini-chat", response_model=GeminiResponse)
+async def gemini_chat(request: GeminiRequest):
+    """Chat with Gemini AI about option spreads"""
+    try:
+        # Get Gemini API key from environment
+        gemini_api_key = os.getenv("GEMINI_API_KEY", "AIzaSyA6cZxMuNGLQkOvFcY4hff2d7BSmtmAA8c")
+        
+        if not gemini_api_key:
+            raise HTTPException(status_code=500, detail="Gemini API key not configured")
+        
+        # Engineer the prompt to restrict responses to option spreads only
+        engineered_prompt = f"""You are an expert AI assistant that specializes ONLY in financial option spreads (e.g., bull call spread, bear put spread, iron condor, butterfly spread, calendar spread, etc.). Your sole purpose is to answer questions clearly and concisely about these topics.
+
+If the user asks a question about anything other than option spreads (such as specific stocks, cryptocurrencies, general news, coding, or any other unrelated topic), you MUST refuse to answer.
+
+Your ONLY response in that case must be this exact phrase: "I can only answer questions related to option spreads."
+
+Do not provide any other information or pleasantries if the question is off-topic.
+
+For valid option spread questions, provide clear, educational answers that help traders understand the strategy, its risks, rewards, and when to use it.
+
+User's question: "{request.question}" """
+
+        # Prepare the payload for Gemini API
+        payload = {
+            "contents": [{
+                "role": "user",
+                "parts": [{"text": engineered_prompt}]
+            }]
+        }
+        
+        # Make the API call to Gemini
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_api_key}"
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                api_url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+                timeout=30.0
+            )
+            
+            if not response.is_success:
+                raise HTTPException(status_code=response.status_code, detail=f"Gemini API error: {response.text}")
+            
+            result = response.json()
+            
+            if result.get("candidates") and len(result["candidates"]) > 0:
+                candidate = result["candidates"][0]
+                if candidate.get("content") and candidate["content"].get("parts"):
+                    answer_text = candidate["content"]["parts"][0]["text"]
+                    
+                    return GeminiResponse(
+                        answer=answer_text,
+                        timestamp=datetime.now().isoformat()
+                    )
+            
+            raise HTTPException(status_code=500, detail="Invalid response from Gemini API")
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Gemini API error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get response from Gemini AI: {str(e)}")
 
 # WebSocket info endpoint
 @app.get("/api/websocket-info")
