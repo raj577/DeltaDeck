@@ -20,7 +20,11 @@ services:
       - key: ANGEL_TOTP_TOKEN
         sync: false
       - key: CORS_ORIGINS
+<<<<<<< HEAD
         value: https://delta-deck-llp9-git-main-anirdths-projects.vercel.app/,http://localhost:5173,http://localhost:3000
+=======
+        value: https://delta-deck-llp9-git-main-anirdths-projects.vercel.app,http://localhost:5173,http://localhost:3000
+>>>>>>> 96f231ee3be773c8e4a0ed8c1abfaffe5317b3c2
       - key: LOG_LEVEL
         value: INFO
       - key: PORT
