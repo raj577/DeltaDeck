@@ -15,7 +15,7 @@ function App() {
   const [wsError, setWsError] = useState(null)
   const wsRef = useRef(null)
   const reconnectTimeoutRef = useRef(null)
-  
+
   // Mobile chat states
   const [isMobile, setIsMobile] = useState(false)
   const [showChatModal, setShowChatModal] = useState(false)
@@ -24,12 +24,14 @@ function App() {
   // Detect mobile device
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+      const isMobileDevice = window.innerWidth < 1024 // lg breakpoint
+      console.log('Screen width:', window.innerWidth, 'isMobile:', isMobileDevice)
+      setIsMobile(isMobileDevice)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
-    
+
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
@@ -39,7 +41,7 @@ function App() {
       const timer = setTimeout(() => {
         setShowChatBubble(false)
       }, 5000)
-      
+
       return () => clearTimeout(timer)
     }
   }, [showChatBubble, isMobile])
@@ -406,8 +408,13 @@ function App() {
         </div>
       </main>
 
-      {/* Mobile Floating Chat Button */}
-      {isMobile && (
+      {/* Debug indicator - remove this later */}
+      <div className="fixed top-20 left-4 z-50 bg-black/80 text-white px-3 py-2 rounded-lg text-xs">
+        Screen: {typeof window !== 'undefined' ? window.innerWidth : 'unknown'}px | Mobile: {isMobile ? 'YES' : 'NO'}
+      </div>
+
+      {/* Mobile Floating Chat Button - Always show for testing */}
+      {(isMobile || window.innerWidth < 1024) && (
         <>
           {/* Chat Bubble */}
           {showChatBubble && (
@@ -436,9 +443,9 @@ function App() {
           {/* Mobile Chat Modal */}
           {showChatModal && (
             <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
-              <div className="absolute inset-x-4 top-4 bottom-4 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-                {/* Modal Header */}
-                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4 flex items-center justify-between">
+              <div className="absolute inset-x-4 top-4 bottom-4 bg-white rounded-2xl shadow-2xl flex flex-col">
+                {/* Modal Header - Fixed */}
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4 flex items-center justify-between flex-shrink-0 rounded-t-2xl">
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                       <span className="text-white text-lg">🤖</span>
@@ -456,8 +463,8 @@ function App() {
                   </button>
                 </div>
 
-                {/* Modal Content */}
-                <div className="flex-1 overflow-hidden p-6">
+                {/* Modal Content - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-6 min-h-0">
                   <GeminiChat />
                 </div>
               </div>

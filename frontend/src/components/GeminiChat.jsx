@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 // Helper component for the loading spinner
 const LoadingSpinner = () => (
@@ -45,6 +45,23 @@ export default function GeminiChat() {
     const [answer, setAnswer] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState('')
+    
+    // Ref for auto-scrolling to answer
+    const answerRef = useRef(null)
+
+    // Auto-scroll to answer when it appears
+    useEffect(() => {
+        if (answer && answerRef.current) {
+            // Small delay to ensure the content is rendered
+            setTimeout(() => {
+                answerRef.current.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start',
+                    inline: 'nearest'
+                })
+            }, 100)
+        }
+    }, [answer])
 
     /**
      * Handles the submission of a question to the Gemini API.
@@ -193,7 +210,7 @@ User's question: "${question}"`
                     </div>
                 )}
 
-                {answer && <AiResponse text={answer} />}
+                {answer && <div ref={answerRef}><AiResponse text={answer} /></div>}
 
                 {!answer && !error && !isLoading && (
                     <div className="text-center py-12 text-gray-500">
