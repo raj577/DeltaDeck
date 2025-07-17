@@ -1,199 +1,224 @@
-# Deployment Guide - Option Spreads Analyzer
+# Deployment Guide 🚀
 
-## 🚀 Backend Deployment on Render
+This guide will help you deploy the Option Spreads Analyzer to production using Render (backend) and Vercel (frontend).
 
-### Prerequisites
-1. Create a [Render](https://render.com) account
-2. Have your Angel One API credentials ready
+## 📋 Prerequisites
 
-### Step 1: Deploy Backend
-1. **Connect Repository**:
-   - Go to Render Dashboard
-   - Click "New +" → "Web Service"
-   - Connect your GitHub repository
-   - Select the repository containing this project
+- GitHub account
+- Render account (free tier available)
+- Vercel account (free tier available)
+- Angel One API credentials
+- Gemini AI API key
 
-2. **Configure Service**:
+## 🔧 Backend Deployment (Render)
+
+### Step 1: Prepare Your Repository
+
+1. **Push to GitHub** (if not already done):
+   ```bash
+   git add .
+   git commit -m "Prepare for deployment"
+   git push origin main
+   ```
+
+### Step 2: Deploy to Render
+
+1. **Go to [Render Dashboard](https://dashboard.render.com/)**
+2. **Click "New +" → "Web Service"**
+3. **Connect your GitHub repository**
+4. **Configure the service:**
    - **Name**: `option-spreads-api`
    - **Region**: Oregon (US West)
    - **Branch**: `main`
-   - **Root Directory**: `backend`
-   - **Runtime**: Python 3
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r backend/requirements.txt`
+   - **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT`
 
-3. **Environment Variables**:
-   Add these environment variables in Render dashboard:
-   ```
-   ANGEL_API_KEY=3GhdtVsl
-   ANGEL_SECRET_KEY=66e83c38-8d81-4fd0-852b-11ef0abd537f
-   ANGEL_CLIENT_CODE=your_client_code_here
-   ANGEL_PASSWORD=your_pin_here
-   ANGEL_TOTP_TOKEN=your_qr_token_here
-   CORS_ORIGINS=https://your-frontend-domain.vercel.app,http://localhost:5173
-   LOG_LEVEL=INFO
-   PORT=10000
-   ```
+### Step 3: Set Environment Variables
 
-4. **Deploy**:
-   - Click "Create Web Service"
-   - Wait for deployment to complete
-   - Note your backend URL: `https://your-app-name.onrender.com`
+In Render dashboard, add these environment variables:
 
-### Step 2: Test Backend
-Once deployed, test these endpoints:
-- `https://your-app-name.onrender.com/health`
-- `https://your-app-name.onrender.com/docs` (API documentation)
-- `https://your-app-name.onrender.com/api/status`
+```bash
+# Angel One API Configuration
+ANGEL_API_KEY=3GhdtVsl
+ANGEL_SECRET_KEY=66e83c38-8d81-4fd0-852b-11ef0abd537f
+ANGEL_CLIENT_CODE=S1968092
+ANGEL_PASSWORD=1425
+ANGEL_TOTP_TOKEN=U3U5MXCKROK2WV4FFXYK3CN3OY
 
-## 🌐 Frontend Deployment on Vercel
+# Gemini AI Configuration
+GEMINI_API_KEY=AIzaSyA6cZxMuNGLQkOvFcY4hff2d7BSmtmAA8c
 
-### Prerequisites
-1. Create a [Vercel](https://vercel.com) account
-2. Have your backend URL from Render
+# Application Configuration
+CORS_ORIGINS=https://your-frontend-domain.vercel.app,http://localhost:3000,http://localhost:5173
+PORT=10000
+LOG_LEVEL=INFO
+```
 
-### Step 1: Prepare Frontend
-1. **Update Environment Variables**:
-   Create `frontend/.env.production`:
-   ```
-   VITE_API_BASE_URL=https://your-render-app.onrender.com
-   VITE_WS_URL=wss://your-render-app.onrender.com/ws
-   VITE_REFRESH_INTERVAL=30000
+### Step 4: Deploy
+
+1. **Click "Create Web Service"**
+2. **Wait for deployment** (5-10 minutes)
+3. **Your API will be available** at: `https://option-spreads-api.onrender.com`
+
+## 🌐 Frontend Deployment (Vercel)
+
+### Step 1: Prepare Frontend for Production
+
+1. **Update API base URL** in frontend:
+   ```bash
+   # Create frontend/.env.production
+   VITE_API_BASE_URL=https://option-spreads-api.onrender.com
+   VITE_WS_URL=wss://option-spreads-api.onrender.com/ws
    ```
 
-### Step 2: Deploy Frontend
-1. **Connect Repository**:
-   - Go to Vercel Dashboard
-   - Click "New Project"
-   - Import your GitHub repository
+### Step 2: Deploy to Vercel
 
-2. **Configure Project**:
+1. **Go to [Vercel Dashboard](https://vercel.com/dashboard)**
+2. **Click "New Project"**
+3. **Import your GitHub repository**
+4. **Configure the project:**
    - **Framework Preset**: Vite
    - **Root Directory**: `frontend`
    - **Build Command**: `npm run build`
    - **Output Directory**: `dist`
 
-3. **Environment Variables**:
-   Add in Vercel dashboard:
+### Step 3: Set Environment Variables
+
+In Vercel dashboard, add:
+
+```bash
+VITE_API_BASE_URL=https://option-spreads-api.onrender.com
+VITE_WS_URL=wss://option-spreads-api.onrender.com/ws
+```
+
+### Step 4: Deploy
+
+1. **Click "Deploy"**
+2. **Wait for deployment** (2-3 minutes)
+3. **Your app will be available** at: `https://your-project-name.vercel.app`
+
+## 🔄 Update CORS Origins
+
+After frontend deployment, update the backend CORS_ORIGINS:
+
+1. **Go to Render dashboard**
+2. **Update CORS_ORIGINS** environment variable:
    ```
-   VITE_API_BASE_URL=https://your-render-app.onrender.com
-   VITE_WS_URL=wss://your-render-app.onrender.com/ws
-   VITE_REFRESH_INTERVAL=30000
+   https://your-actual-vercel-domain.vercel.app,http://localhost:3000,http://localhost:5173
    ```
+3. **Redeploy the backend**
 
-4. **Deploy**:
-   - Click "Deploy"
-   - Wait for deployment to complete
-   - Note your frontend URL: `https://your-app.vercel.app`
+## ✅ Verification Checklist
 
-### Step 3: Update CORS
-Update your backend's CORS_ORIGINS environment variable on Render:
-```
-CORS_ORIGINS=https://your-app.vercel.app,http://localhost:5173
-```
+### Backend Health Check
+- [ ] Visit `https://option-spreads-api.onrender.com/health`
+- [ ] Should return: `{"status":"healthy","message":"Option Spreads Analyzer API is running",...}`
 
-## 🔧 Local Development
+### API Endpoints Test
+- [ ] `GET /api/status` - Check Angel One connection
+- [ ] `GET /api/prices` - Get current NIFTY/BANKNIFTY prices
+- [ ] `GET /api/recommendations/NIFTY` - Get spread recommendations
+- [ ] `POST /api/gemini-chat` - Test AI chat functionality
 
-### Backend
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate  # Windows
-pip install -r requirements.txt
-python main.py
-```
+### Frontend Functionality
+- [ ] Real-time price updates working
+- [ ] WebSocket connection established
+- [ ] Spread recommendations loading
+- [ ] AI chat responding to questions
+- [ ] Mobile responsive design
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-## 📊 API Endpoints
-
-### Available Endpoints
-- `GET /health` - Health check
-- `GET /api/status` - API status
-- `GET /api/prices` - Current NIFTY/BANKNIFTY prices
-- `GET /api/recommendations/{symbol}` - Quick recommendations
-- `POST /api/recommendations` - Detailed recommendations
-- `GET /api/gainers-losers` - Top gainers/losers
-- `GET /api/chart-data` - Historical OHLC data
-- `GET /docs` - Interactive API documentation
-
-### Example API Calls
-```bash
-# Get current prices
-curl https://your-app.onrender.com/api/prices
-
-# Get NIFTY recommendations
-curl https://your-app.onrender.com/api/recommendations/NIFTY
-
-# Get chart data
-curl "https://your-app.onrender.com/api/chart-data?symbol=NIFTY"
-```
-
-## 🛠️ Troubleshooting
+## 🐛 Troubleshooting
 
 ### Common Issues
 
-1. **Backend not starting**:
-   - Check environment variables are set correctly
-   - Verify Angel One API credentials
-   - Check logs in Render dashboard
+#### Backend Issues:
+1. **Build Failures**:
+   - Check `requirements.txt` is in backend folder
+   - Verify Python version compatibility
 
-2. **CORS errors**:
-   - Ensure frontend URL is in CORS_ORIGINS
-   - Check both HTTP and HTTPS variants
+2. **Angel One API Errors**:
+   - Verify all API credentials are correct
+   - Check if TOTP token is valid
 
-3. **API timeouts**:
-   - Angel One API may have rate limits
-   - Check authentication status
-   - Verify TOTP token is correct
+3. **WebSocket Issues**:
+   - Ensure WebSocket URL uses `wss://` for HTTPS
+   - Check CORS configuration
 
-4. **Frontend not loading data**:
-   - Check VITE_API_BASE_URL points to correct backend
-   - Verify backend is running and accessible
-   - Check browser console for errors
+#### Frontend Issues:
+1. **API Connection Errors**:
+   - Verify VITE_API_BASE_URL is correct
+   - Check CORS origins in backend
 
-### Monitoring
-- **Backend logs**: Available in Render dashboard
-- **Frontend logs**: Check browser console
-- **API status**: Visit `/api/status` endpoint
+2. **Build Failures**:
+   - Ensure all dependencies are in package.json
+   - Check for TypeScript errors
 
-## 🔐 Security Notes
+### Performance Optimization
 
-1. **Environment Variables**:
-   - Never commit .env files to git
-   - Use Render/Vercel environment variable settings
-   - Rotate API keys regularly
+#### Backend:
+- **Free tier limitations**: 512MB RAM, sleeps after 15min inactivity
+- **Upgrade to paid plan** for better performance
+- **Add Redis caching** for frequently accessed data
 
-2. **CORS Configuration**:
-   - Only allow necessary origins
-   - Use HTTPS in production
+#### Frontend:
+- **Vercel automatically optimizes** builds
+- **Enable compression** for static assets
+- **Use CDN** for better global performance
 
-3. **Rate Limiting**:
-   - Angel One API has rate limits
-   - Implement caching if needed
+## 📊 Monitoring
 
-## 📈 Performance Tips
+### Backend Monitoring:
+- **Render Dashboard**: View logs, metrics, and deployment status
+- **Health endpoint**: Monitor API availability
+- **Error tracking**: Check logs for API errors
 
-1. **Backend**:
-   - Use single worker on free tier
-   - Implement caching for frequent requests
-   - Monitor API usage
+### Frontend Monitoring:
+- **Vercel Analytics**: Track page views and performance
+- **Browser DevTools**: Monitor WebSocket connections
+- **User feedback**: Monitor chat functionality
 
-2. **Frontend**:
-   - Enable gzip compression
-   - Optimize bundle size
-   - Use CDN for static assets
+## 🔒 Security Best Practices
 
-## 🎯 Next Steps
+### Environment Variables:
+- ✅ Never commit API keys to Git
+- ✅ Use environment variables for all secrets
+- ✅ Rotate API keys regularly
 
-After successful deployment:
-1. Test all functionality
-2. Monitor performance and errors
-3. Set up alerts for downtime
-4. Consider upgrading to paid plans for better performance
-5. Implement WebSocket for real-time updates
+### CORS Configuration:
+- ✅ Restrict origins to your domains only
+- ✅ Don't use wildcard (*) in production
+- ✅ Update origins when domains change
+
+### API Security:
+- ✅ Implement rate limiting
+- ✅ Add request validation
+- ✅ Monitor for unusual activity
+
+## 🚀 Going Live
+
+### Final Steps:
+1. **Test all functionality** in production
+2. **Update README.md** with live URLs
+3. **Share your app** with users
+4. **Monitor performance** and user feedback
+
+### Live URLs:
+- **Backend API**: `https://option-spreads-api.onrender.com`
+- **Frontend App**: `https://your-project-name.vercel.app`
+- **API Documentation**: `https://option-spreads-api.onrender.com/docs`
+
+## 🎉 Congratulations!
+
+Your Option Spreads Analyzer is now live and accessible to users worldwide! 
+
+### Features Available:
+- ✅ Real-time NIFTY & BANKNIFTY price streaming
+- ✅ AI-powered option spread recommendations
+- ✅ Interactive chat for trading education
+- ✅ Professional trading interface
+- ✅ Mobile-responsive design
+
+---
+
+**Need help?** Check the troubleshooting section or create an issue in the GitHub repository.
