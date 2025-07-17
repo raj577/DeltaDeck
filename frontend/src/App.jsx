@@ -39,7 +39,7 @@ function App() {
 
       // Test basic connectivity first
       console.log('Testing API connectivity...')
-      const response = await fetch('http://127.0.0.1:8000/api/prices')
+      const response = await fetch('https://option-spreads-api.onrender.com/api/prices')
       console.log('Response status:', response.status)
 
       if (!response.ok) {
@@ -77,7 +77,7 @@ function App() {
   const fetchRecommendations = async (symbol) => {
     try {
       console.log(`Fetching recommendations for ${symbol}...`)
-      const response = await fetch(`http://127.0.0.1:8000/api/recommendations/${symbol}`)
+      const response = await fetch(`https://option-spreads-api.onrender.com/api/recommendations/${symbol}`)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -97,7 +97,7 @@ function App() {
   const connectWebSocket = () => {
     try {
       console.log('🔌 Connecting to WebSocket...')
-      const ws = new WebSocket('ws://127.0.0.1:8000/ws')
+      const ws = new WebSocket('wss://option-spreads-api.onrender.com/ws')
       wsRef.current = ws
 
       ws.onopen = () => {

@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://option-spreads-api.onrender.com',
+  baseURL: 'https://option-spreads-api.onrender.com',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -29,7 +29,7 @@ api.interceptors.response.use(
   },
   (error) => {
     console.error('API Response Error:', error.response?.data || error.message)
-    
+
     // Handle different error types
     if (error.response) {
       // Server responded with error status
@@ -108,10 +108,10 @@ export const apiService = {
         symbol: symbol.toUpperCase(),
         interval
       }
-      
+
       if (fromDate) params.from_date = fromDate
       if (toDate) params.to_date = toDate
-      
+
       const response = await api.get('/api/chart-data', { params })
       return response.data
     })
