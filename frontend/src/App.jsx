@@ -15,6 +15,34 @@ function App() {
   const [wsError, setWsError] = useState(null)
   const wsRef = useRef(null)
   const reconnectTimeoutRef = useRef(null)
+  
+  // Mobile chat states
+  const [isMobile, setIsMobile] = useState(false)
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [showChatBubble, setShowChatBubble] = useState(true)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Auto-hide chat bubble after 5 seconds
+  useEffect(() => {
+    if (showChatBubble && isMobile) {
+      const timer = setTimeout(() => {
+        setShowChatBubble(false)
+      }, 5000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [showChatBubble, isMobile])
 
   // Fetch initial data and setup WebSocket
   useEffect(() => {
@@ -246,19 +274,19 @@ function App() {
           <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
             <span>Developed by Rajat Srivastav</span>
             <span className="text-gray-400">|</span>
-            <a 
-              href="https://www.linkedin.com/in/rajat-srivastav-393725325/"
+            <a
+              href="https://www.linkedin.com/in/rajat-srivastav-3937253/"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-semibold transition-colors duration-200"
             >
               <span>Connect me on LinkedIn</span>
-              <svg 
-                className="w-4 h-4" 
-                fill="currentColor" 
+              <svg
+                className="w-4 h-4"
+                fill="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
               </svg>
             </a>
           </div>
@@ -360,7 +388,7 @@ function App() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recommendations Section */}
-          <div className="lg:col-span-1">
+          <div className={isMobile ? "lg:col-span-2" : "lg:col-span-1"}>
             <SpreadCards
               recommendations={recommendations}
               symbol={selectedSymbol}
@@ -369,12 +397,74 @@ function App() {
             />
           </div>
 
-          {/* AI Chat Section */}
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
-            <GeminiChat />
-          </div>
+          {/* AI Chat Section - Hidden on mobile */}
+          {!isMobile && (
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-8">
+              <GeminiChat />
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Mobile Floating Chat Button */}
+      {isMobile && (
+        <>
+          {/* Chat Bubble */}
+          {showChatBubble && (
+            <div className="fixed bottom-24 right-6 z-40 animate-bounce">
+              <div className="relative">
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-2xl shadow-lg text-sm font-medium whitespace-nowrap">
+                  Chat with DeltaDeck AI
+                  {/* Bubble tail */}
+                  <div className="absolute -bottom-2 right-4 w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-8 border-t-purple-600"></div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Floating Chat Button */}
+          <button
+            onClick={() => {
+              setShowChatModal(true)
+              setShowChatBubble(false)
+            }}
+            className="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95"
+          >
+            <span className="text-white text-2xl">🤖</span>
+          </button>
+
+          {/* Mobile Chat Modal */}
+          {showChatModal && (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+              <div className="absolute inset-x-4 top-4 bottom-4 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                {/* Modal Header */}
+                <div className="bg-gradient-to-r from-purple-600 to-pink-600 px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                      <span className="text-white text-lg">🤖</span>
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg">DeltaDeck AI</h3>
+                      <p className="text-white/80 text-sm">Option Spreads Assistant</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowChatModal(false)}
+                    className="w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-colors"
+                  >
+                    <span className="text-white text-xl">×</span>
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="flex-1 overflow-hidden p-6">
+                  <GeminiChat />
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
