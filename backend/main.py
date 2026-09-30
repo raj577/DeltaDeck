@@ -576,7 +576,7 @@ User's question: "{request.question}" """
         }
         
         # Make the API call to Gemini
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_api_key}"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={gemini_api_key}"
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
